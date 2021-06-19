@@ -1,4 +1,7 @@
 // this will help us to store reference to our database
+import mongodb from "mongodb"
+// we have to convert string into mongodb object id
+const ObjectId = mongodb.ObjectID
 
 let restaurants
 
@@ -56,6 +59,62 @@ export default class RestaurantsDAO {
         `Unable to convert cursor to array or problem counting documents, ${e}`,
       )
       return { restaurantsList: [], totalNumRestaurants: 0 }
+    }
+  }
+
+  static async getRestaurantByID(id) {
+    try {
+      const pipeline = [
+        {
+          // first we are trying to match id of a specific restaurant
+            $match: {
+                _id: new ObjectId(id),
+            },
+        },
+              {
+                  $lookup: {
+                      from: "reviews",
+                      let: {
+                          id: "$_id",
+                      },
+                      pipeline: [
+                          {
+                              $match: {
+                                  $expr: {
+                                      $eq: ["$restaurant_id", "$$id"],
+                                  },
+                              },
+                          },
+                          {
+                              $sort: {
+                                  date: -1,
+                              },
+                          },
+                      ],
+                      as: "reviews",
+                  },
+              },
+              {
+                  $addFields: {
+                      reviews: "$reviews",
+                  },
+              },
+          ]
+      return await restaurants.aggregate(pipeline).next()
+    } catch (e) {
+      console.error(`Something went wrong in getRestaurantByID: ${e}`)
+      throw e
+    }
+  }
+
+  static async getCuisines() {
+    let cuisines = []
+    try {
+      cuisines = await restaurants.distinct("cuisine")
+      return cuisines
+    } catch (e) {
+      console.error(`Unable to get cuisines, ${e}`)
+      return cuisines
     }
   }
 }
