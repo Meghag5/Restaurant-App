@@ -1,8 +1,7 @@
-// this will help us to store reference to our database
 import mongodb from "mongodb"
-// we have to convert string into mongodb object id
 const ObjectId = mongodb.ObjectID
 
+// this will help us to store reference to our database
 let restaurants
 
 // this is the first function run ehen we will connect to restaurants we will receive collection of information
@@ -61,12 +60,10 @@ export default class RestaurantsDAO {
       return { restaurantsList: [], totalNumRestaurants: 0 }
     }
   }
-
   static async getRestaurantByID(id) {
     try {
       const pipeline = [
         {
-          // first we are trying to match id of a specific restaurant
             $match: {
                 _id: new ObjectId(id),
             },
